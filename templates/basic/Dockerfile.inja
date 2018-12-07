@@ -12,4 +12,4 @@ RUN sudo chown -R conan . && \
 	conan profile show default && \
 	cmake . && \
 	cmake --build .
-CMD ["./bin/awesomesauce"]
+CMD ["./bin/{{project_name}}"]
