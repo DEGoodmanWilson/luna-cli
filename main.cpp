@@ -19,13 +19,15 @@ int main(int argc, char **argv)
     )";
 
     std::string project_name;
+    const std::string{LUNA_ETC_PATH};
+
     bool test{false};
 
     std::map<std::string, docopt::value> args
             = docopt::docopt(USAGE,
                              {argv + 1, argv + argc},
                              true,               // show help if requested
-                             luna + " " + version);  // version string
+                             LUNA_NAME + " " + LUNA_VERSION);  // version string
 
     for (auto const &arg : args)
     {
