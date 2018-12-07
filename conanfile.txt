@@ -1,0 +1,6 @@
+[requires]
+inja/[~=1.0]@DEGoodmanWilson/stable
+docopt/[~=0.6]@conan/stable
+
+[generators]
+cmake
