@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 #include <inja/inja.hpp>
 #include <docopt.h>
+#include <git2.h>
 
 static const std::string version{"1.0.0"};
 static const std::string luna{"luna"};
@@ -39,6 +40,50 @@ Options:
         }
     }
 
+
+    boost::filesystem::path config_path{getenv("HOME")};
+    config_path /= ".luna";
+    auto template_path{config_path};
+    template_path /= "templates";
+    if (!boost::filesystem::exists(config_path))
+    {
+        boost::filesystem::create_directory(config_path);
+    }
+
+    if (boost::filesystem::exists(template_path))
+    {
+        // nuke the existing templates
+        boost::filesystem::remove_all(template_path);
+    }
+    boost::filesystem::create_directory(template_path);
+
+    // now, download the currently available templates.
+    const char * url{"https://github.com/DEGoodmanWilson/luna-templates.git"};
+    const char * path{template_path.string().c_str()};
+
+
+
+
+    ////
+    git_libgit2_init();
+    git_repository *repo = NULL;
+    int error = git_clone(&repo, url, path, NULL);
+    if(error != 0)
+    {
+        const git_error *e = giterr_last();
+        printf("Error %d/%d: %s\n", error, e->klass, e->message);
+        exit(error);
+    }
+
+
+    // TODO do this with a progress bar https://libgit2.org/docs/guides/101-samples/#repositories_clone_progress
+
+
+
+    // TODO check options to see if they are requesting a template update
+
+
+
     // make the output directory
     if (!boost::filesystem::create_directory(project_name))
     {
@@ -46,8 +91,8 @@ Options:
     }
 
     // get the path to the requested template files
-    boost::filesystem::path template_path{"."};
-    (template_path /= "templates") /= template_name;
+    auto requested_template_path = template_path / template_name;
+    auto project_path = boost::filesystem::path{"."} / project_name;
 
     // Load up inja variables
     nlohmann::json template_data;
@@ -55,26 +100,19 @@ Options:
     auto project_name_cap = project_name;
     project_name_cap[0] = toupper(project_name[0]);
     template_data["project_name_cap"] = project_name_cap;
-    inja::Environment env{};
+    inja::Environment env{"", project_path.string()+boost::filesystem::path::preferred_separator};
 
     // render templates
-    for (auto &entry : boost::filesystem::directory_iterator(template_path))
+    for (auto &entry : boost::filesystem::directory_iterator(requested_template_path))
     {
         std::cout << "    " << entry.path() << '\n';
         // extract filename
         auto filename = entry.path().filename();
         if (filename.extension() != ".inja") continue;
 
-        // parse inja
-        auto temp = env.parse_template(entry.path().string());
-        auto rendered_file = env.render_template(temp, template_data);
-
-        // output file
-        auto output_path = boost::filesystem::path(project_name) /= filename.stem();
-        std::ofstream output_file;
-        output_file.open(output_path.string(), std::ios::trunc);
-        output_file << rendered_file;
-        output_file.close();
+        // parse inja and output data
+        auto templ = env.parse_template(entry.path().string());
+        env.write(templ, template_data, filename.stem().string());
     }
 
     return 0;
