@@ -12,7 +12,7 @@ class LunaPackageConan(ConanFile):
 
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake"
-    requires = "inja/[~=1.0]@DEGoodmanWilson/stable", "docopt/[~=0.6]@conan/stable", "boost_filesystem/[~=1.67]@bincrafters/stable", "libgit2/[~=0.26.0]@DEGoodmanWilson/testing"
+    requires = "inja/[~=1.0]@DEGoodmanWilson/stable", "docopt/[~=0.6]@conan/stable", "boost_filesystem/[~=1.67]@bincrafters/stable", "libgit2/[~=0.26]@DEGoodmanWilson/stable"
 
     def build(self):
         cmake = CMake(self)
