@@ -5,8 +5,8 @@
 #include <docopt.h>
 #include <git2.h>
 
-static const std::string version{"1.0.0"};
-static const std::string luna{"luna"};
+static const std::string luna_version{LUNA_VERSION};
+static const std::string luna_name{LUNA_NAME};
 
 int main(int argc, char **argv)
 {
@@ -19,24 +19,24 @@ int main(int argc, char **argv)
 
 )";
 
-    static const char USAGE[] = R"(Luna. The C++ web framework.
+    static const std::string usage{luna_name + " " + luna_version + R"(: The C++ web framework.
 
 Usage:
-  luna <project_name> [--template=<template_name>]
-  luna --refresh_templates
+  )"+luna_name+R"( <project_name> [--template=<template_name>]
+  )"+luna_name+R"(  --refresh_templates
 
 Options:
   <project_name>                The name of your project.
   --template=<template_name>    The project template to use. [default: basic].
   --refresh_templates           Redownload all the templates
-)";
+)"};
 
     std::string project_name, template_name;
-    const std::string version_string{std::string{LUNA_NAME} + " " + LUNA_VERSION};
+    const std::string version_string{luna_name + " " + luna_version};
     bool refresh_templates{false};
 
     std::map<std::string, docopt::value> args
-            = docopt::docopt(USAGE,
+            = docopt::docopt(usage,
                              {argv + 1, argv + argc},
                              true,               // show help if requested
                              version_string);  // version string
@@ -59,7 +59,7 @@ Options:
 
 
     boost::filesystem::path config_path{getenv("HOME")};
-    config_path /= ".luna";
+    config_path /= "."+luna_name;
     auto template_path{config_path};
     template_path /= "templates";
     if (!boost::filesystem::exists(config_path))
