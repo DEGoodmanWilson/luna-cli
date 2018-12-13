@@ -10,7 +10,16 @@ static const std::string luna{"luna"};
 
 int main(int argc, char **argv)
 {
-    static const char USAGE[] = R"(luna.
+    std::cout << R"(       _
+   ___/_)
+  (, /      ,_   _
+    /   (_(_/ (_(_(_
+  CX________________
+                    )
+
+)";
+
+    static const char USAGE[] = R"(Luna. The C++ web framework.
 
 Usage:
   luna <project_name> [--template=<template_name>]
@@ -68,13 +77,10 @@ Options:
         boost::filesystem::create_directory(template_path);
 
         // now, download the currently available templates.
+        std::cout << "Grabbing the latest Luna templates...";
         const char *url{"https://github.com/DEGoodmanWilson/luna-templates.git"};
         const char *path{template_path.string().c_str()};
 
-
-
-
-        ////
         git_libgit2_init();
         git_repository *repo = NULL;
         int error = git_clone(&repo, url, path, NULL);
@@ -87,20 +93,22 @@ Options:
 
         // TODO do this with a progress bar https://libgit2.org/docs/guides/101-samples/#repositories_clone_progress
 
-        if(refresh_templates)
+        if (refresh_templates)
         {
-            std::cout << "Done!"<<std::endl;
+            std::cout << " Done!" << std::endl;
             exit(0);
         }
     }
 
 
     // make the output directory
+    std::cout << "Making folder " << project_name << "...";
     if (!boost::filesystem::create_directory(project_name))
     {
         std::cerr << "ERROR!! Directory " << project_name << " already exists. Exiting." << std::endl;
         exit(1);
     }
+    std::cout << " Done!" << std::endl;
 
     // get the path to the requested template files
     auto requested_template_path = template_path / template_name;
@@ -117,7 +125,7 @@ Options:
     // render templates
     for (auto &entry : boost::filesystem::directory_iterator(requested_template_path))
     {
-        std::cout << "    " << entry.path() << '\n';
+        std::cout << "Creating " << entry.path() << std::endl;
         // extract filename
         auto filename = entry.path().filename();
         if (filename.extension() != ".inja") continue;
@@ -126,6 +134,28 @@ Options:
         auto templ = env.parse_template(entry.path().string());
         env.write(templ, template_data, filename.stem().string());
     }
+
+    std::cout << project_name << R"( ready for use.
+********
+
+If you haven't yet installed conan, do so by typing
+
+brew install conan
+
+Then, configure conan by typing:
+
+conan remote add vthiery https://api.bintray.com/conan/vthiery/conan-packages
+conan remote add degoodmanwilson https://api.bintray.com/conan/degoodmanwilson/opensource
+conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+
+(you only need to do this once)
+
+Finally, to build )" << project_name << R"( type:
+
+cd )" << project_name << R"(
+conan install .
+conan build .
+./bin/)" << project_name << "\n\n...et voila!" << std::endl;
 
     return 0;
 }
