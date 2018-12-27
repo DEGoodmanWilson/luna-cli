@@ -22,8 +22,8 @@ int main(int argc, char **argv)
     static const std::string usage{luna_name + " " + luna_version + R"(: The C++ web framework.
 
 Usage:
-  )"+luna_name+R"( <project_name> [--template=<template_name>]
-  )"+luna_name+R"(  --refresh_templates
+  )" + luna_name + R"( <project_name> [--template=<template_name>]
+  )" + luna_name + R"(  --refresh_templates
 
 Options:
   <project_name>                The name of your project.
@@ -59,7 +59,7 @@ Options:
 
 
     boost::filesystem::path config_path{getenv("HOME")};
-    config_path /= "."+luna_name;
+    config_path /= "." + luna_name;
     auto template_path{config_path};
     template_path /= "templates";
     if (!boost::filesystem::exists(config_path))
@@ -120,19 +120,42 @@ Options:
     auto project_name_cap = project_name;
     project_name_cap[0] = toupper(project_name[0]);
     template_data["project_name_cap"] = project_name_cap;
-    inja::Environment env{"", project_path.string() + boost::filesystem::path::preferred_separator};
+    inja::Environment env{""};
 
     // render templates
-    for (auto &entry : boost::filesystem::directory_iterator(requested_template_path))
+    for (auto &entry : boost::filesystem::recursive_directory_iterator(requested_template_path))
     {
-        std::cout << "Creating " << entry.path() << std::endl;
-        // extract filename
+        auto parent_path = entry.path().parent_path();
+        auto relative_path = boost::filesystem::relative(entry.path(), requested_template_path);
+        auto relative_path_parent = boost::filesystem::relative(parent_path, requested_template_path);
         auto filename = entry.path().filename();
-        if (filename.extension() != ".inja") continue;
 
-        // parse inja and output data
-        auto templ = env.parse_template(entry.path().string());
-        env.write(templ, template_data, filename.stem().string());
+        if (boost::filesystem::is_directory(entry.path()))
+        {
+            // make directory
+            auto output_path = project_path / relative_path;
+            std::cout << "Making dir " << output_path << std::endl;
+            boost::filesystem::create_directory(output_path);
+        }
+        else //it's a file
+        {
+            if (filename.extension() == ".inja")
+            {
+                //it's a template, render it without the inja suffix
+                filename = filename.stem().string();
+            }
+
+            auto out_filename = project_path / relative_path_parent / filename;
+            if (relative_path_parent.string() == ".")
+            {
+                out_filename = project_path / filename;
+            }
+            std::cout << "Creating   " << out_filename << std::endl;
+
+            // parse inja and output data
+            auto templ = env.parse_template(entry.path().string());
+            env.write(templ, template_data, out_filename.string());
+        }
     }
 
     std::cout << project_name << R"( ready for use.

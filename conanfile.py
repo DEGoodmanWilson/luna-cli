@@ -6,7 +6,7 @@ from conans import ConanFile, CMake
 
 class LunaPackageConan(ConanFile):
     name = "luna-cli"
-    version = "1.0.1"
+    version = "1.0.2"
     url = "https://github.com/DEGoodmanWilson/luna-cli.git"
     license = "MIT"
 
